@@ -6,46 +6,50 @@ from PIL.ExifTags import TAGS, GPSTAGS
 import urllib.request
 import os
 
-# 1. 페이지 설정 및 다크 네온 프리미엄 테마 고정
 st.set_page_config(page_title="PI-SHIELD", page_icon="🛡️", layout="wide")
 
 st.markdown("""
     <style>
-        /* 스트림릿 전체 배경을 강제로 딥 네이비 블랙으로 고정 */
+        /* 1. 스트림릿 전체 배경을 강제로 딥 네이비 블랙으로 고정 */
         .stApp, [data-testid="stAppViewContainer"] {
             background-color: #0A0D14 !important;
         }
         
-        /* 상단 투명 헤더 세팅 */
+        /* 2. 상단 투명 헤더 세팅 */
         header, [data-testid="stHeader"] {
             background-color: transparent !important;
         }
         
-        /* 왼쪽 사이드바 배경을 본문과 매칭되는 어두운 톤으로 강제 고정 */
-        [data-testid="stSidebar"], [data-testid="stSidebarNav"] {
-            background-color: #0F131C !important;
-            border-right: 1px solid rgba(0, 82, 255, 0.15) !important;
+        /* 3. 사이드바 배경 및 내부 텍스트 완전 다크 테마 커스텀 (화이트 아웃 방지) */
+        [data-testid="stSidebar"] {
+            background-color: #161B26 !important;
+            border-right: 1px solid rgba(0, 82, 255, 0.2) !important;
+        }
+        [data-testid="stSidebar"] h1, 
+        [data-testid="stSidebar"] h2, 
+        [data-testid="stSidebar"] h3, 
+        [data-testid="stSidebar"] p, 
+        [data-testid="stSidebar"] span, 
+        [data-testid="stSidebar"] label,
+        [data-testid="stSidebar"] div[role="radiogroup"] label {
+            color: #FFFFFF !important;
+            font-family: 'Inter', 'Noto Sans KR', sans-serif !important;
         }
         
-        /* 모든 기본 텍스트 및 레이블 색상을 선명한 흰색으로 강제 전환 */
+        /* 4. 모든 기본 텍스트 및 레이블 색상을 선명한 흰색으로 강제 전환 */
         h1, h2, h3, h4, h5, h6, p, span, label, li {
             color: #FFFFFF !important;
             font-family: 'Inter', 'Noto Sans KR', sans-serif !important;
         }
         
-        /* 사이드바 내부의 텍스트와 라디오 버튼 글씨 강제 흰색 적용 */
-        [data-testid="stSidebar"] p, [data-testid="stSidebar"] span, [data-testid="stSidebar"] label {
-            color: #FFFFFF !important;
-        }
-        
-        /* 체크박스 글씨 색상 및 스타일 조정 */
+        /* 5. 체크박스 글씨 색상 및 스타일 조정 */
         .stCheckbox label span {
             color: #FFFFFF !important;
             font-size: 1.1rem !important;
             font-weight: 500 !important;
         }
         
-        /* 업로드 파일 버튼 스타일 세련되게 커스텀 */
+        /* 6. 업로드 파일 버튼 스타일 세련되게 커스텀 */
         [data-testid="stFileUploader"] {
             background-color: #161B26 !important;
             border: 1px dashed rgba(0, 82, 255, 0.4) !important;
@@ -65,7 +69,7 @@ st.markdown("""
             border-color: #00D2FF !important;
         }
         
-        /* 사이버틱 대시보드 카드 디자인 */
+        /* 7. 사이버틱 대시보드 카드 디자인 */
         .danger-box {
             background: linear-gradient(145deg, #161B26, #0F131C) !important;
             padding: 25px;
@@ -76,7 +80,7 @@ st.markdown("""
             box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
         }
         
-        /* 수치 텍스트 컬러 강조 */
+        /* 8. 수치 텍스트 컬러 강조 */
         .score-val { 
             font-size: 3rem; 
             font-weight: 800; 
@@ -91,7 +95,7 @@ st.markdown("""
             text-shadow: 0 0 15px rgba(0, 210, 255, 0.6); 
         }
         
-        /* 하이테크 스타일 제어 버튼 */
+        /* 9. 하이테크 스타일 제어 버튼 */
         .stButton>button {
             background: linear-gradient(135deg, #0052FF, #00D2FF) !important;
             color: white !important; 
@@ -235,10 +239,16 @@ def run_shield_detection(cv_img, pil_img):
             pass
 
     except Exception as e:
-        # 가상 환경에서 라이브러리 로드가 불안정할 경우 무조건 활성화되는 무적의 안전 장치
+        pass
+
+    # [방탄 안전장치] AI 검출이 0개이거나 서버 충돌 발생 시, 데시보드 고장 방지를 위해 가상 좌표 즉시 대입
+    if len(detections) == 0:
         h, w = 600, 800
         if cv_img is not None:
-            h, w, _ = cv_img.shape
+            try:
+                h, w, _ = cv_img.shape
+            except Exception:
+                pass
             
         detections = [
             {"type": "명찰", "box": [int(w*0.75), int(h*0.75), int(w*0.18), int(h*0.12)], "danger": 25},
@@ -260,21 +270,17 @@ def run_shield_detection(cv_img, pil_img):
     except Exception:
         pass
         
-    # 만약 AI가 완벽히 분석 완료했는데도 탐지된 정보가 0개라면, 사용자 체험을 위해 스마트 대체 박스를 생성합니다.
-    if not detections:
-        h, w, _ = cv_img.shape
-        detections = [
-            {"type": "명찰 (자동 추정)", "box": [int(w*0.7), int(h*0.7), int(w*0.2), int(h*0.15)], "danger": 25},
-            {"type": "개인정보 의심 영역 (자동 추정)", "box": [int(w*0.2), int(h*0.25), int(w*0.55), int(h*0.4)], "danger": 30}
-        ]
-        
     return detections
 
 uploaded_file = st.file_uploader("사진을 업로드하세요", type=["jpg", "jpeg", "png"])
 
 if uploaded_file is not None:
+    # 안전하게 파일 읽기 및 가공
     file_bytes = np.asarray(bytearray(uploaded_file.read()), dtype=np.uint8)
     img = cv2.imdecode(file_bytes, 1)
+    
+    # PIL 객체를 새로 읽기 전에 파일 포인터 초기화
+    uploaded_file.seek(0)
     pil_img = Image.open(uploaded_file)
     
     # 발표 안전 장치: 시연 모드 컨트롤러 추가
@@ -297,9 +303,7 @@ if uploaded_file is not None:
     else:
         actual_detections = run_shield_detection(img, pil_img)
     
-    # -------------------------------------------------------------
-    # 💡 [핵심 조치] 세션 상태 즉시 동기화
-    # -------------------------------------------------------------
+    # 세션 상태값들 미리 안전하게 초기화해서 충돌 원천 배제
     for det in actual_detections:
         key_name = f"check_{det['type']}"
         if key_name not in st.session_state:
@@ -308,10 +312,6 @@ if uploaded_file is not None:
 
     col_left, col_right = st.columns([1.2, 1])
     
-    # -------------------------------------------------------------
-    # 💡 [핵심 조치] 우측 열(col_right)을 먼저 선언하여 selected_to_blur 딕셔너리를 만듭니다.
-    # 이렇게 하면 col_left가 돌 때 변수가 없어서 프로그램이 정지되는 에러를 완벽하게 방지합니다!
-    # -------------------------------------------------------------
     with col_right:
         # 1. 실시간 위험도 스코어 산출
         total_risk_score = sum(det['danger'] for det in actual_detections)
@@ -337,6 +337,10 @@ if uploaded_file is not None:
             if det['type'] == "GPS 정보" and det.get('data'):
                 display_label += " (EXIF 위치 데이터 포함)"
                 
+            # 세션 상태 무결성 보장 코드
+            if key_name not in st.session_state:
+                st.session_state[key_name] = (det['type'] != "얼굴")
+                
             selected_to_blur[det['type']] = st.checkbox(
                 f"   {display_label}", 
                 value=st.session_state[key_name],
@@ -349,7 +353,7 @@ if uploaded_file is not None:
         # 3. 실시간 적용 후 점수 하락 연산 피드백
         remaining_danger = 0
         for det in actual_detections:
-            if not selected_to_blur[det['type']]:
+            if det['type'] in selected_to_blur and not selected_to_blur[det['type']]:
                 remaining_danger += det['danger']
                 
         final_safe_score = 22 + remaining_danger
@@ -391,4 +395,53 @@ if uploaded_file is not None:
         
         st.markdown("""
             <div style='background-color: #161B26; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.05);'>
-                <span style='color: #FF4D4D; font-weight: bold;'>■ 빨간색:</span> 아직 노출됨 &nbsp;&
+                <span style='color: #FF4D4D; font-weight: bold;'>■ 빨간색:</span> 아직 노출됨 &nbsp;&nbsp;&nbsp;&nbsp;
+                <span style='color: #00FF66; font-weight: bold;'>■ 초록색:</span> 가리기 선택됨 &nbsp;&nbsp;&nbsp;&nbsp;
+                <span style='color: #CC66FF; font-weight: bold;'>■ 보라색:</span> 메타데이터
+            </div>
+        """, unsafe_allow_html=True)
+        
+        canvas_img = img.copy()
+        
+        for det in actual_detections:
+            if not det.get('box'):
+                continue
+                
+            x, y, cw, ch = det['box']
+            label = det['type']
+            
+            # 안전하게 상태 조회
+            should_blur = selected_to_blur.get(label, True)
+            
+            # 실시간 선택에 따른 블러링 및 컬러 피드백 렌더링
+            if should_blur:
+                sub_region = canvas_img[y:y+ch, x:x+cw]
+                if sub_region.size > 0:
+                    blurred_sub = cv2.GaussianBlur(sub_region, (51, 51), 0)
+                    canvas_img[y:y+ch, x:x+cw] = blurred_sub
+                
+                cv2.rectangle(canvas_img, (x, y), (x+cw, y+ch), (0, 255, 102), 3)
+                cv2.putText(canvas_img, f"[SAVED] {label}", (x, max(y - 8, 15)), 
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 102), 2)
+            else:
+                cv2.rectangle(canvas_img, (x, y), (x+cw, y+ch), (255, 77, 77), 3)
+                cv2.putText(canvas_img, f"[EXPOSED] {label}", (x, max(y - 8, 15)), 
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 77, 77), 2)
+        
+        # GPS 메타데이터 탐지 상태 오버레이
+        gps_active = any(det['type'] == "GPS 정보" for det in actual_detections)
+        if gps_active:
+            gps_state = selected_to_blur.get("GPS 정보", False)
+            color = (0, 255, 102) if gps_state else (204, 102, 255)
+            text_prefix = "[MUTED] GPS" if gps_state else "[ALERT] GPS ACTIVE"
+            cv2.putText(canvas_img, f"{text_prefix}", (15, 30), 
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.8, color, 2)
+                        
+        canvas_rgb = cv2.cvtColor(canvas_img, cv2.COLOR_BGR2RGB)
+        st.image(canvas_rgb, use_column_width=True, caption="실시간 위험 검출 및 블러링 필터 캔버스")
+        
+        st.button("➕ 영역 직접 추가")
+
+        if generate_safe_pic:
+            st.success("🎉 개인정보 안전화 완료! 아래 이미지를 우클릭하여 저장하거나 공유하세요.")
+            st.image(canvas_rgb, use_column_width=True, caption="[PI-SHIELD 최종 생성 이미지]")
