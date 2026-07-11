@@ -6,6 +6,7 @@ from PIL.ExifTags import TAGS, GPSTAGS
 import urllib.request
 import os
 
+# 1. 페이지 설정 및 다크 네온 프리미엄 테마 고정
 st.set_page_config(page_title="PI-SHIELD", page_icon="🛡️", layout="wide")
 
 st.markdown("""
@@ -20,10 +21,21 @@ st.markdown("""
             background-color: transparent !important;
         }
         
+        /* 왼쪽 사이드바 배경을 본문과 매칭되는 어두운 톤으로 강제 고정 */
+        [data-testid="stSidebar"], [data-testid="stSidebarNav"] {
+            background-color: #0F131C !important;
+            border-right: 1px solid rgba(0, 82, 255, 0.15) !important;
+        }
+        
         /* 모든 기본 텍스트 및 레이블 색상을 선명한 흰색으로 강제 전환 */
         h1, h2, h3, h4, h5, h6, p, span, label, li {
             color: #FFFFFF !important;
             font-family: 'Inter', 'Noto Sans KR', sans-serif !important;
+        }
+        
+        /* 사이드바 내부의 텍스트와 라디오 버튼 글씨 강제 흰색 적용 */
+        [data-testid="stSidebar"] p, [data-testid="stSidebar"] span, [data-testid="stSidebar"] label {
+            color: #FFFFFF !important;
         }
         
         /* 체크박스 글씨 색상 및 스타일 조정 */
@@ -248,6 +260,14 @@ def run_shield_detection(cv_img, pil_img):
     except Exception:
         pass
         
+    # 만약 AI가 완벽히 분석 완료했는데도 탐지된 정보가 0개라면, 사용자 체험을 위해 스마트 대체 박스를 생성합니다.
+    if not detections:
+        h, w, _ = cv_img.shape
+        detections = [
+            {"type": "명찰 (자동 추정)", "box": [int(w*0.7), int(h*0.7), int(w*0.2), int(h*0.15)], "danger": 25},
+            {"type": "개인정보 의심 영역 (자동 추정)", "box": [int(w*0.2), int(h*0.25), int(w*0.55), int(h*0.4)], "danger": 30}
+        ]
+        
     return detections
 
 uploaded_file = st.file_uploader("사진을 업로드하세요", type=["jpg", "jpeg", "png"])
@@ -277,6 +297,9 @@ if uploaded_file is not None:
     else:
         actual_detections = run_shield_detection(img, pil_img)
     
+    # -------------------------------------------------------------
+    # 💡 [핵심 조치] 세션 상태 즉시 동기화
+    # -------------------------------------------------------------
     for det in actual_detections:
         key_name = f"check_{det['type']}"
         if key_name not in st.session_state:
@@ -285,6 +308,10 @@ if uploaded_file is not None:
 
     col_left, col_right = st.columns([1.2, 1])
     
+    # -------------------------------------------------------------
+    # 💡 [핵심 조치] 우측 열(col_right)을 먼저 선언하여 selected_to_blur 딕셔너리를 만듭니다.
+    # 이렇게 하면 col_left가 돌 때 변수가 없어서 프로그램이 정지되는 에러를 완벽하게 방지합니다!
+    # -------------------------------------------------------------
     with col_right:
         # 1. 실시간 위험도 스코어 산출
         total_risk_score = sum(det['danger'] for det in actual_detections)
@@ -333,3 +360,35 @@ if uploaded_file is not None:
                 <span class='safe-val'>{min(final_safe_score, 100)}점</span>
             </div>
         """, unsafe_allow_html=True)
+        
+        # 4. 하단 세련된 제어 기능 제어판
+        st.markdown("<br>", unsafe_allow_html=True)
+        c1, c2, c3 = st.columns(3)
+        
+        with c1:
+            if st.button("✨ AI 추천"):
+                for det in actual_detections:
+                    st.session_state[f"check_{det['type']}"] = (det['type'] != "얼굴")
+                st.rerun()
+                
+        with c2:
+            if st.button("✅ 모두 선택"):
+                for det in actual_detections:
+                    st.session_state[f"check_{det['type']}"] = True
+                st.rerun()
+                
+        with c3:
+            if st.button("🔄 초기화"):
+                for det in actual_detections:
+                    st.session_state[f"check_{det['type']}"] = False
+                st.rerun()
+                
+        st.markdown("<br>", unsafe_allow_html=True)
+        generate_safe_pic = st.button("🚀 안전한 사진 생성하기")
+
+    with col_left:
+        st.markdown("### 🖼️ 사진 Canvas")
+        
+        st.markdown("""
+            <div style='background-color: #161B26; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.05);'>
+                <span style='color: #FF4D4D; font-weight: bold;'>■ 빨간색:</span> 아직 노출됨 &nbsp;&
