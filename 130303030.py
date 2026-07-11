@@ -2,103 +2,123 @@ import streamlit as st
 import cv2
 import numpy as np
 
-# 1. 페이지 기본 설정 및 Chic 블랙&블루 테마 CSS 주입
-st.set_page_config(page_title="PI-SHIELD", page_icon="🛡️", layout="centered")
+# 1. 페이지 설정 및 테마 CSS (Chic 블랙 & 네온 컬러 유지)
+st.set_page_config(page_title="PI-SHIELD", page_icon="🛡️", layout="wide")
 
 st.markdown("""
     <style>
-        /* 딥 네이비 블랙 배경 */
-        .main { 
-            background-color: #0A0D14; 
-            color: #FFFFFF; 
-        }
-        /* 일렉트릭 블루 그라디언트 버튼 */
-        .stButton>button {
-            background: linear-gradient(135deg, #0052FF, #00D2FF);
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            font-weight: bold;
-            font-size: 1.1rem;
-            border-radius: 8px;
-            width: 100%;
-            box-shadow: 0 4px 15px rgba(0, 82, 255, 0.3);
-            transition: all 0.3s ease;
-        }
-        .stButton>button:hover {
-            box-shadow: 0 6px 20px rgba(0, 210, 255, 0.5);
-            transform: translateY(-2px);
-        }
-        /* 사이버 대시보드 카드 */
-        .danger-card {
+        .main { background-color: #0A0D14; color: #FFFFFF; }
+        .danger-box {
             background: linear-gradient(145deg, #161B26, #0F131C);
-            padding: 25px;
-            border-radius: 16px;
+            padding: 20px;
+            border-radius: 12px;
             border: 1px solid rgba(0, 82, 255, 0.2);
             text-align: center;
-            margin-bottom: 25px;
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            margin-bottom: 20px;
         }
-        /* 네온 블루 위험도 점수 */
-        .score-text {
-            font-size: 3.5rem;
-            font-weight: 800;
-            color: #00D2FF;
-            text-shadow: 0 0 15px rgba(0, 210, 255, 0.6);
-            margin: 10px 0;
+        .score-val { font-size: 2.5rem; font-weight: 800; color: #FF4D4D; text-shadow: 0 0 10px rgba(255, 77, 77, 0.5); }
+        .safe-val { font-size: 2rem; font-weight: 800; color: #00D2FF; text-shadow: 0 0 10px rgba(0, 210, 255, 0.5); }
+        .legend-text { font-size: 0.9rem; margin-bottom: 5px; }
+        .stButton>button {
+            background: linear-gradient(135deg, #0052FF, #00D2FF);
+            color: white; border: none; font-weight: bold; width: 100%; border-radius: 6px;
         }
     </style>
 """, unsafe_allow_html=True)
 
-# 2. 메인 타이틀 (수정완료: PI-SHIELD)
-st.markdown("""
-    <div style='text-align: center; padding: 40px 0 20px 0;'>
-        <h1 style='color: #FFFFFF; font-size: 3rem; font-weight: 900; letter-spacing: -1px;'>
-            🛡️ PI-<span style='color: #0052FF;'>SHIELD</span>
-        </h1>
-        <p style='color: #6C7A9C; font-size: 1.1rem; font-weight: 500;'>
-            얼굴은 선명하게, 개인정보는 철저하게. 디지털 시민의 프라이버시 방패
-        </p>
-    </div>
-""", unsafe_allow_html=True)
+# 메인 타이틀
+st.markdown("<h2 style='text-align: center; color: #FFFFFF;'>🛡️ PI-SHIELD 결과 화면</h2>", unsafe_allow_html=True)
 
-# 3. 파일 업로더
-uploaded_file = st.file_uploader("보호할 사진을 업로드하세요", type=["jpg", "jpeg", "png"])
+# 파일 업로더
+uploaded_file = st.file_uploader("사진을 업로드하세요", type=["jpg", "jpeg", "png"])
 
-# 4. 가상의 결과 출력 화면 (프로그래머가 실제 OpenCV 엔진을 연결할 자리)
 if uploaded_file is not None:
-    # 이미지를 OpenCV 포맷으로 변환
+    # OpenCV 이미지 변환
     file_bytes = np.asarray(bytearray(uploaded_file.read()), dtype=np.uint8)
     img = cv2.imdecode(file_bytes, 1)
     
-    # 임시 가상 로직 (실제 개발 시 개발팀이 짠 함수로 교체될 예정)
-    mock_danger_score = 88 
+    # -------------------------------------------------------------
+    # 🛑 [프로그래머 영역] 실제 AI/OpenCV 데이터 연동부
+    # 프로그래머는 아래 딕셔너리에 실제 탐지 여부(True/False)와 좌표를 바인딩하면 됩니다.
+    # -------------------------------------------------------------
+    detected_info = {
+        "명찰": {"detected": True, "base_danger": 25},
+        "학교명": {"detected": True, "base_danger": 30},
+        "얼굴": {"detected": False, "base_danger": 20},
+        "차량번호판": {"detected": True, "base_danger": 20},
+        "GPS 정보": {"detected": True, "base_danger": 12}
+    }
     
-    st.markdown("---")
+    # 좌측 사진 영역과 우측 대시보드 영역 분할 (기획서 비율 반영)
+    col_left, col_right = st.columns([1.2, 1])
     
-    # 위험도 출력 카드
-    st.markdown(f"""
-        <div class="danger-card">
-            <h3 style='margin: 0; color: #8F9CAE; font-size: 1rem; letter-spacing: 0.5px;'>
-                SPECIFICITY EXPOSURE RISK (특정성 노출 위험도)
-            </h3>
-            <div class="score-text">{mock_danger_score}%</div>
-            <p style='color: #FF4B4B; font-size: 0.95rem; font-weight: 600; margin-top: 5px;'>
-                ⚠️ 주변 글자 정보 및 외곽 배경 패턴 감지! 시스템이 즉시 블러를 가동합니다.
-            </p>
-        </div>
-    """, unsafe_allow_html=True)
-    
-    # 결과 비교 화면 레이아웃 (좌: 원본, 우: 결과)
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.markdown("<p style='text-align:center; color:#6C7A9C;'>[Original Image]</p>", unsafe_allow_html=True)
-        st.image(uploaded_file, use_column_width=True)
+    # --- 좌측 구역: 사진 Canvas & 범례 ---
+    with col_left:
+        st.markdown("### 🖼️ 사진 Canvas")
         
-    with col2:
-        st.markdown("<p style='text-align:center; color:#00D2FF; font-weight:bold;'>[PI-SHIELD Blur Protection]</p>", unsafe_allow_html=True)
-        st.image(uploaded_file, use_column_width=True)
+        # 범례 표시
+        st.markdown("""
+            <div style='background-color: #161B26; padding: 12px; border-radius: 8px; margin-bottom: 15px;'>
+                <span style='color: #FF4D4D; font-weight: bold;'>■ 빨간색:</span> 아직 노출됨 &nbsp;&nbsp;&nbsp;&nbsp;
+                <span style='color: #00FF66; font-weight: bold;'>■ 초록색:</span> 가리기 선택됨 &nbsp;&nbsp;&nbsp;&nbsp;
+                <span style='color: #CC66FF; font-weight: bold;'>■ 보라색:</span> 메타데이터
+            </div>
+        """, unsafe_allow_html=True)
         
-    # 다운로드 버튼
-    st.button("보호된 이미지 다운로드하기")
+        # [탐지 상자 표시] 
+        # 프로그래머가 체크박스 상태에 따라 이미지 위에 cv2.rectangle로 사각형을 그릴 영역입니다.
+        # 시연을 위해 우선 원본을 띄웁니다.
+        img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        st.image(img_rgb, use_column_width=True, caption="[탐지 상자 표시 필드]")
+        
+        # 영역 직접 추가 버튼
+        st.button("➕ 영역 직접 추가")
+
+    # --- 우측 구역: 위험도 점수 & 발견된 정보 리스트 ---
+    with col_right:
+        # 1. 현재 위험도 대시보드
+        st.markdown("<div class='danger-box'>", unsafe_allow_html=True)
+        st.markdown("<p style='margin:0; color:#8F9CAE;'>개인정보 위험도</p>", unsafe_allow_html=True)
+        st.markdown("<div class='score-val'>87 / 100</div>", unsafe_allow_html=True)
+        st.markdown("<p style='color:#FF4D4D; margin:0; font-weight:bold;'>🔥 매우 위험</p>", unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
+        
+        # 2. 발견된 정보 리스트 (체크박스 인터랙션)
+        st.markdown("### 🔍 발견된 정보 5개")
+        
+        selected_to_blur = {}
+        
+        # 기획서에 있는 체크박스 리스트 구성 및 초기값 설정
+        for item, info in detected_info.items():
+            # 얼굴을 제외하고 나머지는 기획서대로 기본 체크(True) 상태로 둠
+            default_val = info["detected"]
+            
+            # 체크박스 생성
+            selected_to_blur[item] = st.checkbox(f"{item}", value=default_val)
+            
+        st.markdown("---")
+        
+        # 3. 적용 후 위험도 연동계산 (인터랙션 피드백)
+        # 체크를 해제할수록(안 가릴수록) 위험도가 실시간으로 올라가는 효과를 줍니다.
+        current_safe_score = 22
+        for item, checked in selected_to_blur.items():
+            if not checked and detected_info[item]["detected"]:
+                current_safe_score += detected_info[item]["base_danger"]
+        
+        st.markdown(f"""
+            <div style='display: flex; justify-content: space-between; align-items: center; background: #161B26; padding: 15px; border-radius: 8px;'>
+                <span style='font-size: 1.1rem; font-weight: bold;'>🛡️ 적용 후 위험도:</span>
+                <span class='safe-val'>{min(current_safe_score, 100)}점</span>
+            </div>
+        """, unsafe_allow_html=True)
+        
+        # 4. 제어용 버튼 셋 (AI 추천 적용, 모두 선택, 초기화)
+        st.markdown("<br>", unsafe_allow_html=True)
+        c1, c2, c3 = st.columns(3)
+        with c1: st.button("✨ AI 추천 적용")
+        with c2: st.button("✅ 모두 선택")
+        with c3: st.button("🔄 초기화")
+        
+        # 5. 최종 결과 생성 버튼
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.button("🚀 안전한 사진 생성하기")
