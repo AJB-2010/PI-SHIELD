@@ -2,9 +2,10 @@ import streamlit as st
 import cv2
 import numpy as np
 
-# 1. 페이지 설정 및 다크 테마 강제 적용 CSS (stApp 기준)
+# STREAMING_CHUNK: 페이지 설정 및 다크 테마 강제 주입...
 st.set_page_config(page_title="PI-SHIELD", page_icon="🛡️", layout="wide")
 
+# STREAMING_CHUNK: 하이테크 CSS 스타일 정의...
 st.markdown("""
     <style>
         /* 1. 스트림릿 전체 배경을 강제로 딥 네이비 블랙으로 고정 */
@@ -30,7 +31,21 @@ st.markdown("""
             font-weight: 500 !important;
         }
         
-        /* 5. 사이버틱 대시보드 카드 디자인 */
+        /* 5. 업로드 파일 버튼(Browse files) 스타일 복원 및 네온 블루 커스텀 */
+        [data-testid="stFileUploader"] button {
+            background-color: #1E293B !important;
+            color: #FFFFFF !important;
+            border: 1px solid rgba(0, 82, 255, 0.5) !important;
+            border-radius: 6px !important;
+            font-weight: bold !important;
+            padding: 8px 16px !important;
+        }
+        [data-testid="stFileUploader"] button:hover {
+            background-color: #0052FF !important;
+            border-color: #00D2FF !important;
+        }
+        
+        /* 6. 사이버틱 대시보드 카드 디자인 */
         .danger-box {
             background: linear-gradient(145deg, #161B26, #0F131C) !important;
             padding: 25px;
@@ -41,7 +56,7 @@ st.markdown("""
             box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
         }
         
-        /* 6. 수치 텍스트 컬러 강조 */
+        /* 7. 수치 텍스트 컬러 강조 */
         .score-val { 
             font-size: 3rem; 
             font-weight: 800; 
@@ -56,7 +71,7 @@ st.markdown("""
             text-shadow: 0 0 15px rgba(0, 210, 255, 0.6); 
         }
         
-        /* 7. 하이테크 스타일 버튼 */
+        /* 8. 일반 버튼 디자인 */
         .stButton>button {
             background: linear-gradient(135deg, #0052FF, #00D2FF) !important;
             color: white !important; 
@@ -75,28 +90,23 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# 메인 타이틀 구역
+# STREAMING_CHUNK: 깔끔한 메인 타이틀 생성...
 st.markdown("""
-    <div style='text-align: center; padding: 30px 0;'>
-        <h1 style='color: #FFFFFF !important; font-size: 3.2rem; font-weight: 900; letter-spacing: -1px; margin-bottom: 10px;'>
-            🛡️ PI-<span style='color: #0052FF;'>SHIELD</span> 결과 화면
+    <div style='text-align: center; padding: 40px 0;'>
+        <h1 style='color: #FFFFFF !important; font-size: 4rem; font-weight: 900; letter-spacing: -2px; margin-bottom: 0px;'>
+            🛡️ PI-<span style='color: #0052FF;'>SHIELD</span>
         </h1>
-        <p style='color: #8F9CAE !important; font-size: 1.1rem;'>
-            기획서 프로토타입 인터랙티브 대시보드 시스템
-        </p>
     </div>
 """, unsafe_allow_html=True)
 
-# 파일 업로더
+# STREAMING_CHUNK: 파일 업로드 기능 구현...
 uploaded_file = st.file_uploader("사진을 업로드하세요", type=["jpg", "jpeg", "png"])
 
 if uploaded_file is not None:
     file_bytes = np.asarray(bytearray(uploaded_file.read()), dtype=np.uint8)
     img = cv2.imdecode(file_bytes, 1)
     
-    # -------------------------------------------------------------
-    # 🛑 [프로그래머 영역] 탐지 여부 설정값 데이터
-    # -------------------------------------------------------------
+    # STREAMING_CHUNK: 데이터 연동 설정...
     detected_info = {
         "명찰": {"detected": True, "base_danger": 25},
         "학교명": {"detected": True, "base_danger": 30},
@@ -105,7 +115,7 @@ if uploaded_file is not None:
         "GPS 정보": {"detected": True, "base_danger": 12}
     }
     
-    # 좌우 화면 분할
+    # STREAMING_CHUNK: 화면 영역 분할...
     col_left, col_right = st.columns([1.2, 1])
     
     # --- 좌측 구역: 사진 Canvas & 범례 ---
@@ -125,7 +135,7 @@ if uploaded_file is not None:
         
         st.button("➕ 영역 직접 추가")
 
-    # --- 우측 구역: 위험도 점수 & 발견된 정보 리스트 ---
+    # STREAMING_CHUNK: 우측 대시보드 렌더링...
     with col_right:
         # 1. 현재 위험도 대시보드
         st.markdown("""
